@@ -3,200 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Inflation</title>
+    <title>Starbucks Global Intelligence 2025</title>
+    
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="style.css">
+
     <style>
-        /* 2. UNIVERSAL THEME VARIABLES */
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --accent-green: #00704A;
-            --accent-orange: #ff9800;
-            --accent-blue: #2196F3;
-            --accent-purple: #9C27B0;
-            --accent-red: #E91E63;
-            --text-main: #e0e0e0;
-            --text-muted: #888888;
-        }
-
+        /* --- CORE PAGE STYLES --- */
         body {
-            margin: 0;
-            background-color: var(--bg-color);
-            color: var(--text-main);
+            background-color: #121212;
+            color: #e0e0e0;
+            overflow-x: hidden; /* Hide scrollbar during loading */
             font-family: 'Roboto', sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            margin: 0;
         }
 
-        /* HERO SECTION */
-        .hero { text-align: center; padding: 80px 20px 40px; }
-        
-        /* Ensure 'assets/starbucks.png' exists! */
-        .logo { width: 100px; height: auto; margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(0,112,74, 0.3)); }
-
-        h1 {
-            font-size: 56px; font-weight: 900; margin: 0; letter-spacing: -1px; color: #fff;
+        /* --- PRELOADER STYLES --- */
+        #preloader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: #57068c; /* NYU Purple */
+            z-index: 9999; display: flex; justify-content: center; align-items: center; flex-direction: column;
+            transition: opacity 0.8s ease-out, visibility 0.8s;
         }
-        h1 span { color: var(--accent-green); }
+        /* Updated to style the image instead of the SVG */
+        .nyu-logo-img { width: 180px; height: auto; animation: pulse 1.5s infinite ease-in-out; margin-bottom: 20px; }
+        .loader-text { color: white; font-weight: 700; letter-spacing: 2px; font-size: 14px; text-transform: uppercase; opacity: 0.8; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.9; } 100% { transform: scale(1); opacity: 1; } }
+        .page-content { opacity: 0; transition: opacity 1s ease-in; }
 
-        p.subtitle {
-            font-size: 18px; color: var(--text-muted); margin-top: 10px; font-weight: 300; letter-spacing: 1px; text-transform: uppercase;
-        }
-
-        /* SECTION HEADERS */
-        .section-header {
-            width: 90%; max-width: 1200px; text-align: left;
-            margin-top: 40px; margin-bottom: 20px;
-            border-bottom: 1px solid #333; padding-bottom: 10px;
-            font-size: 20px; font-weight: 700; color: var(--accent-green);
-            text-transform: uppercase; letter-spacing: 1px;
-        }
-
-        /* GRID */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            max-width: 1200px;
-            width: 90%;
-            padding-bottom: 60px;
-        }
-
-        /* CARDS */
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 30px;
-            text-decoration: none;
-            color: white;
-            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
-            border: 1px solid rgba(255,255,255,0.05);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 200px;
+        /* --- NEW BRIGHT HERO SECTION --- */
+        .hero {
+            text-align: center;
+            padding: 160px 20px 130px; /* Slightly taller */
             position: relative;
-            overflow: hidden;
+            color: #ffffff;
+            
+            /* Bright Blue Gradient Overlay + Daytime Earth Image */
+            background: linear-gradient(
+                            rgba(0, 80, 150, 0.3),  /* Light blue top */
+                            rgba(0, 30, 60, 0.8)   /* Deeper blue bottom for text contrast */
+                        ),
+                        url('"D:\aditya\NYU-London\Data-viz\Final-submission\assests\hero.jpeg"'); /* Bright Daytime Earth */
+            
+            background-size: cover;
+            background-position: center 30%; /* Adjusted position to show more continents */
+            
+            /* Vivid blue border to transition to dark theme below */
+            border-bottom: 4px solid #2196F3; 
         }
-
-        .card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
-
-        /* Card-Specific Hover Colors */
-        .card:hover { border-color: var(--accent-green); }
-        .card.pdf:hover { border-color: var(--accent-red); }
-
-        .card-icon { font-size: 32px; margin-bottom: 15px; }
-        .card h2 { font-size: 20px; margin: 0 0 10px 0; font-weight: 700; }
-        .card p { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; }
         
-        .arrow { 
-            font-size: 20px; align-self: flex-end; opacity: 0.5; 
-            transition: opacity 0.3s, transform 0.3s;
-        }
-        .card:hover .arrow { opacity: 1; transform: translateX(5px); }
+        h1 { font-size: 72px; font-weight: 900; margin: 0; letter-spacing: -2px; color: #fff; line-height: 1; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+        h1 span { color: #4fc3f7; /* Lighter blue span for contrast against new bg */ }
+        .subtitle { font-size: 20px; color: #e0e0e0; margin-top: 15px; text-transform: uppercase; letter-spacing: 3px; font-weight: 500; text-shadow: 0 1px 5px rgba(0,0,0,0.5); }
 
+        /* --- TIMELINE CONTAINER --- */
+        .timeline {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 0 100px;
+        }
+
+        /* The Animated Line */
+        .timeline::after {
+            content: ''; position: absolute; width: 6px;
+            background: linear-gradient(180deg, var(--accent-green), var(--accent-orange), var(--accent-red));
+            top: 0; left: 50%; margin-left: -3px; border-radius: 3px;
+            box-shadow: 0 0 15px rgba(0, 112, 74, 0.6);
+            height: 0; animation: drawLine 2s ease-out 3.2s forwards; 
+        }
+        @keyframes drawLine { 0% { height: 0; } 100% { height: 100%; } }
+
+        /* --- CARD CONTAINERS --- */
+        .timeline-container {
+            padding: 10px 50px; position: relative; background-color: transparent;
+            width: 50%; box-sizing: border-box; opacity: 0; animation: fadeIn 0.8s forwards;
+        }
+        .left { left: 0; text-align: right; }
+        .right { left: 50%; text-align: left; }
+
+        /* Dots */
+        .timeline-container::after {
+            content: ''; position: absolute; width: 20px; height: 20px; right: -10px;
+            background-color: #121212; border: 4px solid #fff; top: 50%; transform: translateY(-50%);
+            border-radius: 50%; z-index: 10; box-shadow: 0 0 10px rgba(255,255,255,0.3);
+            opacity: 0; animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        .right::after { left: -10px; right: auto; }
+        .timeline-container:hover::after { background-color: var(--accent-green); border-color: var(--accent-green); }
+
+        /* Card Content */
+        .content {
+            padding: 25px 30px; background-color: #1e1e1e; border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.08); position: relative;
+            transition: all 0.3s; text-decoration: none; display: block; color: #fff;
+        }
+        .content:hover { transform: translateY(-5px); border-color: var(--accent-green); background-color: #252525; box-shadow: 0 15px 30px rgba(0,0,0,0.5); }
+        .content h2 { margin: 10px 0 5px; font-size: 22px; font-weight: 700; color: #fff; }
+        .content p { margin: 0; color: #aaa; font-size: 14px; line-height: 1.5; }
+        .date { font-size: 11px; color: var(--accent-orange); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; display: block; margin-bottom: 5px; }
+        .icon { font-size: 28px; display: block; margin-bottom: 5px; }
+
+        /* Arrows */
+        .left .content::before {
+            content: " "; position: absolute; top: 50%; right: -10px; margin-top: -10px;
+            border-width: 10px 0 10px 10px; border-style: solid; border-color: transparent transparent transparent #1e1e1e;
+        }
+        .right .content::before {
+            content: " "; position: absolute; top: 50%; left: -10px; margin-top: -10px;
+            border-width: 10px 10px 10px 0; border-style: solid; border-color: transparent #1e1e1e transparent transparent;
+        }
+        .left .content:hover::before { border-color: transparent transparent transparent #252525; }
+        .right .content:hover::before { border-color: transparent #252525 transparent transparent; }
+        .content.final { border-left: 4px solid var(--accent-green); }
+        .content.pdf { border-left: 4px solid var(--accent-red); }
+
+        /* --- ANIMATION DELAYS (Offset by +3s for loader) --- */
+        .timeline-container:nth-child(1) { animation-delay: 3.2s; } .timeline-container:nth-child(1)::after { animation-delay: 3.4s; }
+        .timeline-container:nth-child(2) { animation-delay: 3.4s; } .timeline-container:nth-child(2)::after { animation-delay: 3.6s; }
+        .timeline-container:nth-child(3) { animation-delay: 3.6s; } .timeline-container:nth-child(3)::after { animation-delay: 3.8s; }
+        .timeline-container:nth-child(4) { animation-delay: 3.8s; } .timeline-container:nth-child(4)::after { animation-delay: 4.0s; }
+        .timeline-container:nth-child(5) { animation-delay: 4.0s; } .timeline-container:nth-child(5)::after { animation-delay: 4.2s; }
+        .timeline-container:nth-child(6) { animation-delay: 4.2s; } .timeline-container:nth-child(6)::after { animation-delay: 4.4s; }
+        .timeline-container:nth-child(7) { animation-delay: 4.4s; } .timeline-container:nth-child(7)::after { animation-delay: 4.6s; }
+        .timeline-container:nth-child(8) { animation-delay: 4.6s; } .timeline-container:nth-child(8)::after { animation-delay: 4.8s; }
+        .timeline-container:nth-child(9) { animation-delay: 4.8s; } .timeline-container:nth-child(9)::after { animation-delay: 5.0s; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { from { opacity: 0; transform: translateY(-50%) scale(0); } to { opacity: 1; transform: translateY(-50%) scale(1); } }
+
+        /* Mobile */
+        @media screen and (max-width: 768px) {
+            .hero { padding: 100px 20px 80px; } h1 { font-size: 48px; }
+            .timeline::after { left: 31px; }
+            .timeline-container { width: 100%; padding-left: 70px; padding-right: 25px; }
+            .timeline-container::after { left: 21px; } .left::after { left: 21px; }
+            .left, .right { left: 0; text-align: left; }
+            .left .content::before, .right .content::before { left: -10px; right: auto; border-width: 10px 10px 10px 0; border-color: transparent #1e1e1e transparent transparent; }
+        }
     </style>
 </head>
 <body>
 
-    <header class="hero">
-        <img src="starbucks.png" alt="Starbucks Logo" class="logo">
-        <h1>Global <span>Inflation</span></h1>
-        <p class="subtitle">Data Visualization</p>
-    </header>
+    <div id="preloader">
+        <img src="D:\aditya\NYU-London\Data-viz\Final-submission\assests\nyu-logo.png" alt="NYU Logo" class="nyu-logo-img">
+        <div class="loader-text">Loading Data Portfolio...</div>
+    </div>
 
-    <div class="section-header">Primary Visualizations</div>
-    <div class="dashboard-grid">
+    <div class="page-content" id="mainContent">
         
-        <a href="Global-inflation.html" class="card">
-            <div>
-                <div class="card-icon">📈</div>
-                <h2>Inflation Tracker</h2>
-                <p>Longitudinal study (2014-2025) on purchasing power and price changes.</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
+        <header class="hero">
+            <h1>Global <span>Inflation</span></h1>
+            <p class="subtitle">Data visualization</p>
+        </header>
 
-        <a href="executive-dashboards.html" class="card">
-            <div>
-                <div class="card-icon">📊</div>
-                <h2>Executive Dashboards</h2>
-                <p>High-level KPI overview for senior leadership.</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
-
-        <a href="threejs.html" class="card">
-            <div>
-                <div class="card-icon">🧊</div>
-                <h2>3D Store Data</h2>
-                <p>Experimental 3D visualization of store density clusters.</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
-
-        <a href="Final-starbucks.html" class="card">
-            <div>
-                <div class="card-icon">🌍</div>
-                <h2>Starbucks Index</h2>
-                <p>The finalized interactive map comparing Grande Latte prices across 25+ countries.</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
-
+        <div class="timeline">
+            <div class="timeline-container left"><a href="Global-inflation.html" class="content"><span class="date">Phase 1: Context</span><span class="icon">📈</span><h2>Inflation Tracker</h2><p>Longitudinal study (2014-2025) on purchasing power.</p></a></div>
+            <div class="timeline-container right"><a href="inflation-sunburst.html" class="content"><span class="date">Phase 1: Deep Dive</span><span class="icon">🔅</span><h2>Inflation Segments</h2><p>Breakdown of inflation impact by product category.</p></a></div>
+            <div class="timeline-container left"><a href="executive-dashboards.html" class="content"><span class="date">Phase 2: Business Data</span><span class="icon">📊</span><h2>Executive Dashboards</h2><p>High-level KPI overview for senior leadership.</p></a></div>
+            <div class="timeline-container right"><a href="sunburst.html" class="content"><span class="date">Phase 2: Market Share</span><span class="icon">🌞</span><h2>Market Sunburst</h2><p>Interactive radial chart showing market dominance.</p></a></div>
+            <div class="timeline-container left"><a href="threejs.html" class="content"><span class="date">Phase 3: Spatial</span><span class="icon">🧊</span><h2>3D Store Density</h2><p>Experimental 3D visualization of store clusters.</p></a></div>
+            <div class="timeline-container right"><a href="Final-starbucks.html" class="content final"><span class="date">Phase 3: The Index</span><span class="icon">🌍</span><h2>Global Price Map</h2><p>The finalized interactive Grande Latte Index.</p></a></div>
+            <div class="timeline-container left"><a href="new-starbucks.html" class="content"><span class="date">Phase 3: Variant</span><span class="icon">🗺️</span><h2>Alternative Map</h2><p>Secondary visualization attempt (Variant A).</p></a></div>
+            <div class="timeline-container right"><a href="starbucks-testing.html" class="content"><span class="date">Appendix</span><span class="icon">🧪</span><h2>Test Sandbox</h2><p>Development environment for D3.js testing.</p></a></div>
+            <div class="timeline-container left"><a href="Final-Data-Viz-Presentation.pdf" class="content pdf" target="_blank"><span class="date">Final Output</span><span class="icon">📑</span><h2>Download PDF</h2><p>Complete project report and documentation.</p></a></div>
+        </div>
     </div>
 
-    <div class="section-header">Supplementary Analysis & Reports</div>
-    <div class="dashboard-grid">
-
-        <a href="Final-Data-Viz-Presentation.pdf" class="card pdf" target="_blank">
-            <div>
-                <div class="card-icon">📑</div>
-                <h2>Final Presentation (PDF)</h2>
-                <p>Complete project report and methodology documentation.</p>
-            </div>
-            <span class="arrow" style="color: var(--accent-red);">Download ↓</span>
-        </a>
-
-        <a href="sunburst.html" class="card">
-            <div>
-                <div class="card-icon">🌞</div>
-                <h2>Market Sunburst</h2>
-                <p>Hierarchical view of market share by region.</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
-
-        <a href="inflation-sunburst.html" class="card">
-            <div>
-                <div class="card-icon">🔅</div>
-                <h2>Inflation Segments</h2>
-                <p>Breakdown of inflation impact by product category.</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
-
-        <a href="new-starbucks.html" class="card">
-            <div>
-                <div class="card-icon">🗺️</div>
-                <h2>Alternative Map View</h2>
-                <p>Secondary map visualization (Variant A).</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
-
-        <a href="starbucks-testing.html" class="card">
-            <div>
-                <div class="card-icon">🧪</div>
-                <h2>Test Environment</h2>
-                <p>Sandbox for testing data rendering and D3 interactions.</p>
-            </div>
-            <span class="arrow">→</span>
-        </a>
-
-    </div>
+    <script>
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('preloader').style.opacity = '0';
+                document.getElementById('preloader').style.visibility = 'hidden';
+                document.getElementById('mainContent').style.opacity = '1';
+                document.body.style.overflowX = 'hidden'; 
+                document.body.style.overflowY = 'auto';
+            }, 3000);
+        });
+    </script>
 
 </body>
 </html>
