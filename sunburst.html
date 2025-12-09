@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inflation Anatomy: 2025 Forecast</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        /* RESET */
+        * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
+
+        :root {
+            --bg-color: #1a1a1a;       
+            --panel-bg: #222222;       
+            --border: #333333;
+            --text-main: #f0f0f0;
+            --text-muted: #888888;
+            --cool: #5c9ead;    /* Muted Teal */
+            --neutral: #4a4a4a; /* Dark Grey */
+            --warm: #d65a5a;    /* Brick Red */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background: var(--panel-bg);
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 20;
+        }
+
+        h1 {
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .meta-tag {
+            font-size: 11px;
+            background: #333;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #ccc;
+        }
+
+        .dashboard { display: flex; flex: 1; overflow: hidden; }
+
+        .sidebar {
+            width: 320px;
+            background: var(--panel-bg);
+            border-right: 1px solid var(--border);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            z-index: 10;
+        }
+
+        .panel-section h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 8px;
+            font-weight: 600;
+        }
+
+        #breadcrumbs { font-size: 12px; color: var(--cool); margin-bottom: 5px; min-height: 18px; }
+        #detail-name { font-size: 24px; font-weight: 600; margin-bottom: 5px; line-height: 1.2; }
+        #detail-rate { font-size: 36px; font-weight: 400; letter-spacing: -1px; margin-top: 10px; margin-bottom: 25px; }
+        
+        .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .stat-item { background: #2a2a2a; padding: 12px; border-radius: 6px; border: 1px solid var(--border); }
+        .stat-label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; }
+        .stat-val { font-size: 14px; font-weight: 600; color: #fff; }
+
+        .chart-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: var(--bg-color);
+            padding: 20px;
+        }
+
+        svg {
+            max-width: 90%;
+            max-height: 90%;
+            filter: none !important;
+            /* Hardware acceleration to fix edge bleeding */
+            transform: translate3d(0,0,0);
+        }
+
+        path {
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+            shape-rendering: geometricPrecision; /* CRISP EDGES FIX */
+        }
+        path:hover { opacity: 0.85; }
+
+        .center-text { pointer-events: none; text-anchor: middle; }
+        .center-label { font-size: 10px; fill: #888; letter-spacing: 2px; text-transform: uppercase; font-weight: 600; }
+        .center-val { font-size: 28px; font-weight: 600; fill: #fff; }
+
+        /* DATA SOURCE LINKS STYLE */
+        .source-box {
+            font-size: 10px; 
+            color: #666; 
+            margin-top: 20px; 
+            line-height: 1.5; 
+            border-top: 1px solid var(--border);
+            padding-top: 15px;
+        }
+        .source-box a { color: #888; text-decoration: underline; }
+        .source-box a:hover { color: #fff; }
+
+        @media (max-width: 900px) {
+            .dashboard { flex-direction: column-reverse; }
+            .sidebar { width: 100%; height: auto; border-right: none; border-top: 1px solid var(--border); padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Inflation Monitor: <span style="color:#5c9ead">2025 Outlook</span></h1>
+    <span class="meta-tag">Federal Reserve Target Path</span>
+</header>
+
+<div class="dashboard">
+    <div class="sidebar">
+        <div class="panel-section">
+            <h3>Selected Sector</h3>
+            <div id="breadcrumbs">Total CPI</div>
+            <div id="detail-name">Total CPI</div>
+            <div id="detail-rate">+2.3%</div>
+            
+            <div class="stat-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Weight</span>
+                    <span class="stat-val" id="detail-weight">100%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Trend</span>
+                    <span class="stat-val" id="detail-trend">Stable</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel-section" style="margin-top: auto;">
+            <h3>Scale</h3>
+            <div style="height: 6px; background: linear-gradient(90deg, var(--cool), var(--neutral), var(--warm)); border-radius: 3px; margin-bottom: 8px;"></div>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #888;">
+                <span>Cooling (<2%)</span>
+                <span>Target (2%)</span>
+                <span>Heating (>4%)</span>
+            </div>
+            
+            <div class="source-box">
+                <strong>Data Sources:</strong>
+                <ul>
+                    <li><a href="https://www.federalreserve.gov/monetarypolicy/files/fomcprojtabl20241218.pdf" target="_blank">Federal Reserve SEP Forecast</a></li>
+                    <li><a href="https://www.bls.gov/news.release/cpi.nr0.htm" target="_blank">Bureau of Labor Statistics (BLS)</a></li>
+                    <li><a href="https://www.consensuseconomics.com/global-economic-outlook-2025/" target="_blank">Consensus Economics Outlook</a></li>
+                </ul>
+                This chart models a "Soft Landing" scenario where headline CPI stabilizes near 2.3% in 2025.
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-stage" id="chart-container"></div>
+</div>
+
+<script>
+    // --- 1. REALISTIC 2025 DATA (Consensus Forecast) ---
+    const data = {
+        name: "Total CPI",
+        rate: 2.3, // Headline Inflation Target (Fed)
+        children: [
+            {
+                name: "Goods",
+                rate: 0.5, 
+                children: [
+                    { name: "Energy", rate: -1.2, value: 7 }, // Slight deflation
+                    { name: "Vehicles", rate: 0.0, value: 6 }, // Stabilized
+                    { name: "Apparel", rate: 1.5, value: 3 },
+                    { name: "Food", rate: 2.1, value: 8 },    
+                    { name: "Alcohol", rate: 2.5, value: 2 }
+                ]
+            },
+            {
+                name: "Services",
+                rate: 3.4, // Still stickier than goods
+                children: [
+                    { 
+                        name: "Housing", 
+                        rate: 3.8, // Cooling from >6% peaks
+                        children: [
+                            { name: "Rent", rate: 4.0, value: 15 },
+                            { name: "Owners' Eq", rate: 3.7, value: 20 },
+                            { name: "Utilities", rate: 2.5, value: 5 }
+                        ]
+                    },
+                    { 
+                        name: "Transport", 
+                        rate: 4.5, 
+                        children: [
+                            { name: "Insurance", rate: 8.5, value: 3 }, // Remains elevated
+                            { name: "Repairs", rate: 4.0, value: 2 },
+                            { name: "Fares", rate: 1.5, value: 1 }
+                        ]
+                    },
+                    { name: "Medical", rate: 3.0, value: 6 },
+                    { name: "Recreation", rate: 3.2, value: 4 }
+                ]
+            }
+        ]
+    };
+
+    // --- 2. SETUP ---
+    const width = 800;
+    const height = 800;
+    const radius = width / 6;
+
+    // --- 3. COLOR SCALE ---
+    const color = d3.scaleLinear()
+        .domain([-1, 2, 5]) // Deflation, Target, High
+        .range(["#5c9ead", "#4a4a4a", "#d65a5a"]) 
+        .interpolate(d3.interpolateRgb);
+
+    const hierarchy = d3.hierarchy(data)
+        .sum(d => d.value)
+        .sort((a, b) => b.value - a.value);
+
+    const root = d3.partition()
+        .size([2 * Math.PI, hierarchy.height + 1])
+        (hierarchy);
+
+    root.each(d => d.current = d);
+
+    const svg = d3.select("#chart-container").append("svg")
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .style("font-family", "Inter, sans-serif")
+        .attr("shape-rendering", "geometricPrecision"); 
+
+    const arc = d3.arc()
+        .startAngle(d => d.x0)
+        .endAngle(d => d.x1)
+        .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+        .padRadius(radius * 1.5)
+        .innerRadius(d => d.y0 * radius)
+        .outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
+
+    // Dark circle background to prevent seam bleeding
+    svg.append("circle").attr("r", radius * 4).attr("fill", "#1a1a1a");
+
+    // --- DRAWING ---
+    const path = svg.append("g")
+        .selectAll("path")
+        .data(root.descendants().slice(1))
+        .join("path")
+        .attr("fill", d => color(d.data.rate))
+        .attr("fill-opacity", d => arcVisible(d.current) ? (d.children ? 1 : 0.9) : 0)
+        .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none")
+        .attr("d", d => arc(d.current))
+        .attr("stroke", "none"); 
+
+    // Labels
+    const label = svg.append("g")
+        .attr("pointer-events", "none")
+        .attr("text-anchor", "middle")
+        .style("user-select", "none")
+        .selectAll("text")
+        .data(root.descendants().slice(1))
+        .join("text")
+        .attr("dy", "0.35em")
+        .attr("fill-opacity", d => +labelVisible(d.current))
+        .attr("transform", d => labelTransform(d.current))
+        .text(d => d.data.name)
+        .style("fill", "white")
+        .style("font-size", "11px")
+        .style("font-weight", "600"); 
+
+    // Center Circle
+    const parent = svg.append("circle")
+        .datum(root)
+        .attr("r", radius)
+        .attr("fill", "#222") 
+        .attr("pointer-events", "all")
+        .style("cursor", "pointer")
+        .on("click", clicked);
+
+    // Center Text
+    const centerTextGroup = svg.append("g").attr("class", "center-text");
+    centerTextGroup.append("text").attr("class", "center-label").attr("dy", "-1.8em").text("CURRENT");
+    const centerVal = centerTextGroup.append("text").attr("class", "center-val").attr("dy", "0.5em").text(root.data.rate + "%");
+
+    path.filter(d => d.children)
+        .style("cursor", "pointer")
+        .on("click", clicked);
+
+    path.on("mouseenter", function(event, d) {
+        updateSidebar(d);
+        d3.select(this).style("opacity", 1);
+    }).on("mouseleave", function() {
+        d3.select(this).style("opacity", null);
+    });
+
+    // --- LOGIC ---
+    function clicked(event, p) {
+        parent.datum(p.parent || root);
+        
+        root.each(d => d.target = {
+            x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+            x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+            y0: Math.max(0, d.y0 - p.depth),
+            y1: Math.max(0, d.y1 - p.depth)
+        });
+
+        const t = svg.transition().duration(750);
+
+        path.transition(t)
+            .tween("data", d => {
+                const i = d3.interpolate(d.current, d.target);
+                return t => d.current = i(t);
+            })
+            .attr("fill-opacity", d => arcVisible(d.target) ? (d.children ? 1 : 0.9) : 0)
+            .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
+            .attrTween("d", d => () => arc(d.current));
+
+        label.transition(t)
+            .attr("fill-opacity", d => +labelVisible(d.target))
+            .attrTween("transform", d => () => labelTransform(d.current));
+            
+        updateSidebar(p);
+    }
+
+    function updateSidebar(d) {
+        document.getElementById("detail-name").innerText = d.data.name;
+        
+        const rateEl = document.getElementById("detail-rate");
+        const r = d.data.rate;
+        rateEl.innerText = (r > 0 ? "+" : "") + r + "%";
+        
+        if (r > 3) rateEl.style.color = "#d65a5a";      
+        else if (r < 1) rateEl.style.color = "#5c9ead"; 
+        else rateEl.style.color = "#fff";             
+
+        const sequence = d.ancestors().reverse().map(node => node.data.name).join(" > ");
+        document.getElementById("breadcrumbs").innerText = sequence;
+
+        let trend = "Stable";
+        if(r > 4) trend = "Heating";
+        if(r < 1.5) trend = "Cooling";
+        document.getElementById("detail-trend").innerText = trend;
+        
+        centerVal.text(d.data.rate + "%");
+        centerVal.style("fill", color(d.data.rate));
+    }
+
+    function arcVisible(d) {
+        return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
+    }
+
+    function labelVisible(d) {
+        return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+    }
+
+    function labelTransform(d) {
+        const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+        const y = (d.y0 + d.y1) / 2 * radius;
+        return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+    }
+</script>
+
+</body>
+</html>

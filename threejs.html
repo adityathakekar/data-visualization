@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Inflation: Interactive</title>
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #050505; 
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* UI LAYER */
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            pointer-events: none;
+            color: white;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #888;
+            margin: 0 0 10px 0;
+        }
+
+        #data-card {
+            background: rgba(20, 20, 25, 0.9);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-left: 3px solid #5c9ead; 
+            width: 280px;
+            border-radius: 0 8px 8px 0;
+            transition: border-color 0.3s;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .label { font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .value-huge { font-size: 42px; font-weight: 600; margin: 5px 0 20px 0; letter-spacing: -2px; line-height: 1; }
+        .row { display: flex; justify-content: space-between; margin-top: 15px; border-top: 1px solid #333; padding-top: 15px; }
+        .stat { font-size: 14px; font-weight: 500; color: #eee; }
+
+        /* TOOLTIP */
+        #tooltip {
+            position: absolute;
+            background: rgba(0,0,0,0.9);
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s;
+            transform: translate(-50%, -150%);
+            white-space: nowrap;
+            border: 1px solid #444;
+            z-index: 20;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+
+        /* INSTRUCTIONS */
+        #instructions {
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+            text-align: center;
+            color: #444;
+            font-size: 11px;
+            pointer-events: none;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <h1>Inflation 3D Engine</h1>
+        <div id="data-card">
+            <div class="label">Sector Name</div>
+            <div id="ui-name" style="font-size: 20px; margin-bottom: 5px; color: #fff;">Total CPI</div>
+            
+            <div class="label">Inflation Rate</div>
+            <div id="ui-rate" class="value-huge">+3.2%</div>
+
+            <div class="row">
+                <div>
+                    <span class="label">Weight</span><br>
+                    <span id="ui-weight" class="stat">100%</span>
+                </div>
+                <div style="text-align: right;">
+                    <span class="label">Status</span><br>
+                    <span id="ui-status" class="stat" style="color: #d65a5a">Heating</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="tooltip"></div>
+    <div id="instructions">Left Click sector to Focus • Click Background to Reset • Scroll to Zoom</div>
+    <div id="loading">Initializing Engine...</div>
+
+    <script type="importmap">
+        {
+            "imports": {
+                "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+                "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+            }
+        }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+        const data = {
+            name: "Total CPI", rate: 3.2,
+            children: [
+                {
+                    name: "Goods", rate: 0.8,
+                    children: [
+                        { name: "Energy", rate: -1.5, value: 7 },
+                        { name: "Vehicles", rate: -2.2, value: 6 },
+                        { name: "Apparel", rate: 0.5, value: 3 },
+                        { name: "Food", rate: 1.2, value: 8 },
+                        { name: "Alcohol", rate: 2.5, value: 2 }
+                    ]
+                },
+                {
+                    name: "Services", rate: 5.4,
+                    children: [
+                        { name: "Housing", rate: 5.8, children: [
+                                { name: "Rent", rate: 6.1, value: 15 },
+                                { name: "Owners' Eq", rate: 5.9, value: 20 },
+                                { name: "Utilities", rate: 3.0, value: 5 }
+                            ]
+                        },
+                        { name: "Transport", rate: 9.0, children: [
+                                { name: "Insurance", rate: 14.5, value: 3 },
+                                { name: "Repairs", rate: 7.2, value: 2 },
+                                { name: "Fares", rate: -1.0, value: 1 }
+                            ]
+                        },
+                        { name: "Medical", rate: 3.5, value: 6 },
+                        { name: "Recreation", rate: 4.1, value: 4 }
+                    ]
+                }
+            ]
+        };
+
+        try {
+            // --- 1. SCENE SETUP ---
+            const scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050505, 0.02);
+
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 25, 20); // Initial high angle
+
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.body.appendChild(renderer.domElement);
+
+            document.getElementById('loading').style.display = 'none';
+
+            // --- 2. CONTROLS ---
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2.1; 
+            controls.minDistance = 2; // Allow zooming in close
+            controls.maxDistance = 60;
+
+            // --- 3. LIGHTING ---
+            const ambientLight = new THREE.AmbientLight(0x333333, 3); 
+            scene.add(ambientLight);
+
+            const dirLight = new THREE.DirectionalLight(0xffffff, 2);
+            dirLight.position.set(10, 20, 10);
+            dirLight.castShadow = true;
+            dirLight.shadow.mapSize.width = 2048; 
+            dirLight.shadow.mapSize.height = 2048;
+            scene.add(dirLight);
+
+            const spotLight = new THREE.SpotLight(0x5c9ead, 5);
+            spotLight.position.set(-15, 10, -5);
+            spotLight.lookAt(0,0,0);
+            scene.add(spotLight);
+
+            const warmSpot = new THREE.SpotLight(0xd65a5a, 3);
+            warmSpot.position.set(15, 5, 5);
+            warmSpot.lookAt(0,0,0);
+            scene.add(warmSpot);
+
+            // --- 4. GEOMETRY ---
+            const radius = 6;
+            const hierarchy = d3.hierarchy(data).sum(d => d.value);
+            const partition = d3.partition().size([2 * Math.PI, radius * radius]);
+            const root = partition(hierarchy);
+
+            const colorScale = d3.scaleLinear()
+                .domain([-2, 2, 8])
+                .range(["#5c9ead", "#4a4a4a", "#d65a5a"]);
+
+            const sectors = [];
+
+            root.descendants().forEach((node, index) => {
+                if (index === 0) return; 
+
+                const innerR = Math.sqrt(node.y0);
+                const outerR = Math.sqrt(node.y1);
+                const startAngle = node.x0;
+                const endAngle = node.x1;
+
+                const shape = new THREE.Shape();
+                shape.absarc(0, 0, outerR, startAngle, endAngle, false);
+                shape.absarc(0, 0, innerR, endAngle, startAngle, true); 
+
+                const extraHeight = Math.max(0, (node.data.rate - 2) * 0.2);
+                const depth = 0.5 + extraHeight;
+
+                const geometry = new THREE.ExtrudeGeometry(shape, {
+                    depth: depth,
+                    bevelEnabled: true,
+                    bevelThickness: 0.02,
+                    bevelSize: 0.02,
+                    bevelSegments: 2,
+                    curveSegments: 60 
+                });
+
+                geometry.rotateX(-Math.PI / 2);
+                geometry.translate(0, depth/2, 0); 
+
+                const colorHex = colorScale(node.data.rate);
+                const material = new THREE.MeshStandardMaterial({
+                    color: colorHex,
+                    roughness: 0.3,
+                    metalness: 0.4,
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.castShadow = true;
+                mesh.receiveShadow = true;
+                
+                // Store angle data for Camera Logic
+                mesh.userData = {
+                    name: node.data.name,
+                    rate: node.data.rate,
+                    value: node.value,
+                    // Store center angle and radius for zoom calculation
+                    midAngle: (startAngle + endAngle) / 2,
+                    midRadius: (innerR + outerR) / 2,
+                    originalColor: material.color.clone()
+                };
+
+                scene.add(mesh);
+                sectors.push(mesh);
+            });
+
+            const floorGeo = new THREE.CylinderGeometry(15, 15, 0.2, 64);
+            const floorMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1, metalness: 0.8 });
+            const floor = new THREE.Mesh(floorGeo, floorMat);
+            floor.position.y = -0.15;
+            floor.receiveShadow = true;
+            // Name it 'floor' so we can detect clicks on it
+            floor.name = "floor"; 
+            scene.add(floor);
+
+            // --- 5. INTERACTION LOGIC ---
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+            let hoveredMesh = null;
+            let currentFocus = null;
+
+            // MOUSE MOVE (Hover)
+            window.addEventListener('mousemove', (event) => {
+                mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+                mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+                const tooltip = document.getElementById('tooltip');
+                if (tooltip.style.opacity > 0) {
+                    tooltip.style.left = event.clientX + 'px';
+                    tooltip.style.top = (event.clientY - 10) + 'px';
+                }
+            });
+
+            // MOUSE CLICK (Zoom/Focus)
+            window.addEventListener('click', (event) => {
+                // Raycast on Click
+                raycaster.setFromCamera(mouse, camera);
+                // Intersect everything (sectors + floor)
+                const intersects = raycaster.intersectObjects([...sectors, floor]);
+
+                if (intersects.length > 0) {
+                    const object = intersects[0].object;
+
+                    // CASE 1: Clicked a Sector
+                    if (object.name !== "floor") {
+                        focusOnSector(object);
+                    } 
+                    // CASE 2: Clicked Floor/Background -> Reset
+                    else {
+                        resetCamera();
+                    }
+                } else {
+                    // CASE 3: Clicked Empty Void -> Reset
+                    resetCamera();
+                }
+            });
+
+            function focusOnSector(mesh) {
+                // Calculate position to fly to
+                const angle = mesh.userData.midAngle;
+                const radius = mesh.userData.midRadius;
+                
+                // Convert Polar to Cartesian (X, Z)
+                // Note: D3 angles start at 12 o'clock, Three.js trig matches. 
+                // We need to account for rotation.
+                // Simplified: We fly to a position "outside" the ring looking in.
+                
+                const targetX = Math.cos(angle) * (radius + 8); // +8 distance
+                const targetZ = Math.sin(angle) * (radius + 8);
+                const targetY = 8; // Height
+
+                // GSAP Animation to new position
+                gsap.to(camera.position, {
+                    duration: 1.5,
+                    x: targetX,
+                    y: targetY,
+                    z: targetZ,
+                    ease: "power2.inOut",
+                    onUpdate: () => controls.update() // Update controls during tween
+                });
+
+                // Move the control target (lookAt) to the sector center
+                const lookX = Math.cos(angle) * radius;
+                const lookZ = Math.sin(angle) * radius;
+                
+                gsap.to(controls.target, {
+                    duration: 1.5,
+                    x: lookX,
+                    y: 0,
+                    z: lookZ,
+                    ease: "power2.inOut"
+                });
+            }
+
+            function resetCamera() {
+                // Fly back to overview
+                gsap.to(camera.position, {
+                    duration: 1.5,
+                    x: 0,
+                    y: 25,
+                    z: 20,
+                    ease: "power2.inOut"
+                });
+
+                gsap.to(controls.target, {
+                    duration: 1.5,
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    ease: "power2.inOut"
+                });
+            }
+
+            function updateUI(data) {
+                const nameEl = document.getElementById('ui-name');
+                const rateEl = document.getElementById('ui-rate');
+                const statEl = document.getElementById('ui-status');
+                const weightEl = document.getElementById('ui-weight');
+                const card = document.getElementById('data-card');
+
+                if (data) {
+                    nameEl.innerText = data.name;
+                    rateEl.innerText = (data.rate > 0 ? "+" : "") + data.rate + "%";
+                    weightEl.innerText = data.value || "--";
+                    
+                    let color = "#fff";
+                    let status = "Stable";
+                    if(data.rate > 5) { color = "#d65a5a"; status = "Heating"; }
+                    else if(data.rate < 0) { color = "#5c9ead"; status = "Cooling"; }
+                    
+                    rateEl.style.color = color;
+                    statEl.style.color = color;
+                    statEl.innerText = status;
+                    card.style.borderLeftColor = color;
+                } else {
+                    // Reset
+                    nameEl.innerText = "Total CPI";
+                    rateEl.innerText = "+3.2%";
+                    rateEl.style.color = "#fff";
+                    statEl.innerText = "Heating";
+                    statEl.style.color = "#d65a5a";
+                    card.style.borderLeftColor = "#d65a5a";
+                    weightEl.innerText = "100%";
+                }
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                controls.update();
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(sectors);
+
+                if (intersects.length > 0) {
+                    const object = intersects[0].object;
+                    if (hoveredMesh !== object) {
+                        if (hoveredMesh) {
+                            hoveredMesh.material.emissive.setHex(0x000000);
+                        }
+                        
+                        hoveredMesh = object;
+                        hoveredMesh.material.emissive.setHex(0x333333); 
+                        
+                        const tooltip = document.getElementById('tooltip');
+                        tooltip.innerHTML = `${hoveredMesh.userData.name} <strong>${hoveredMesh.userData.rate}%</strong>`;
+                        tooltip.style.opacity = 1;
+                        document.body.style.cursor = "pointer";
+
+                        updateUI(hoveredMesh.userData);
+                    }
+                } else {
+                    if (hoveredMesh) {
+                        hoveredMesh.material.emissive.setHex(0x000000);
+                        hoveredMesh = null;
+                        document.getElementById('tooltip').style.opacity = 0;
+                        document.body.style.cursor = "default";
+                        // Optional: Keep UI showing last hovered, or reset.
+                        // updateUI(null); 
+                    }
+                }
+
+                renderer.render(scene, camera);
+            }
+
+            animate();
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+        } catch (err) {
+            console.error(err);
+        }
+    </script>
+</body>
+</html>

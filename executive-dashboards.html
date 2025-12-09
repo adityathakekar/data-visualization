@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Economic Outlook 2025 | Master Dashboard</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;       /* Slate 900 */
+            --card-bg: #1e293b;        /* Slate 800 */
+            --text-main: #f8fafc;      /* Slate 50 */
+            --text-muted: #94a3b8;     /* Slate 400 */
+            --border: #334155;         /* Slate 700 */
+            --accent-blue: #38bdf8;    /* Sky 400 */
+            --font-main: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* HEADER */
+        header {
+            height: 60px;
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            flex-shrink: 0;
+        }
+
+        .brand { 
+            font-weight: 600; 
+            font-size: 16px; 
+            letter-spacing: 0.5px; 
+            color: #fff; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px;
+        }
+        
+        .brand span { color: var(--accent-blue); }
+
+        /* NAV BUTTONS */
+        .nav-toggles { display: flex; gap: 8px; }
+        .nav-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+        .nav-btn:hover, .nav-btn.active {
+            background: var(--bg-color);
+            color: var(--accent-blue);
+            border-color: var(--accent-blue);
+        }
+
+        /* CHART STAGE */
+        .stage {
+            flex: 1;
+            padding: 20px;
+            position: relative;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            display: none; /* Hidden by default */
+        }
+        .chart-container.active { display: block; }
+
+        /* SVG & TOOLTIP */
+        svg { width: 100%; height: 100%; display: block; }
+        
+        #tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid var(--border);
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #fff;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s;
+            z-index: 100;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand"><span></span> GLOBAL MACRO VISUALIZER</div>
+    <div class="nav-toggles">
+        <button class="nav-btn active" onclick="setMode('scatter')">1. Trajectory</button>
+        <button class="nav-btn" onclick="setMode('stream')">2. Drivers</button>
+        <button class="nav-btn" onclick="setMode('packing')">3. Anatomy</button>
+    </div>
+</header>
+
+<div class="stage">
+    <div id="scatter" class="chart-container active"></div>
+    <div id="stream" class="chart-container"></div>
+    <div id="packing" class="chart-container"></div>
+</div>
+
+<div id="tooltip"></div>
+
+<script>
+    // --- STATE ---
+    let currentMode = 'scatter';
+
+    // --- HELPER: HEADER GENERATOR ---
+    function addHeader(svg, title, type, subtitle, width) {
+        // Chart Type Tag
+        svg.append("text")
+            .attr("x", 20)
+            .attr("y", 30)
+            .attr("fill", "#38bdf8")
+            .attr("font-size", "10px")
+            .attr("font-weight", "bold")
+            .attr("letter-spacing", "1px")
+            .text(`[ ${type.toUpperCase()} ]`);
+
+        // Main Title
+        svg.append("text")
+            .attr("x", 20)
+            .attr("y", 55)
+            .attr("fill", "#f8fafc")
+            .attr("font-size", "20px")
+            .attr("font-weight", "600")
+            .text(title);
+        
+        // Subtitle
+        svg.append("text")
+            .attr("x", 20)
+            .attr("y", 78)
+            .attr("fill", "#94a3b8")
+            .attr("font-size", "12px")
+            .text(subtitle);
+            
+        // Source Footer
+        svg.append("text")
+            .attr("x", width - 20)
+            .attr("y", parseInt(svg.style("height")) - 15)
+            .attr("text-anchor", "end")
+            .attr("fill", "#475569")
+            .attr("font-size", "10px")
+            .text("SOURCE: GLOBAL CONSENSUS ESTIMATES 2025");
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        // Reset UI
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.chart-container').forEach(c => c.classList.remove('active'));
+        
+        // Activate Button
+        const btnText = mode === 'scatter' ? '1.' : mode === 'stream' ? '2.' : '3.';
+        Array.from(document.querySelectorAll('.nav-btn')).find(b => b.innerText.includes(btnText)).classList.add('active');
+        
+        // Activate Container
+        const container = document.getElementById(mode);
+        container.classList.add('active');
+        container.innerHTML = ''; // Clear canvas
+        
+        // Draw
+        if (mode === 'scatter') drawScatter(mode);
+        if (mode === 'stream') drawStream(mode);
+        if (mode === 'packing') drawPacking(mode);
+    }
+
+    // Initialize
+    drawScatter('scatter');
+
+
+    // =========================================================
+    // CHART 1: THE PATH
+    // =========================================================
+    function drawScatter(id) {
+        const div = document.getElementById(id);
+        const width = div.clientWidth;
+        const height = div.clientHeight;
+        const margin = {top: 100, right: 60, bottom: 50, left: 60};
+
+        const svg = d3.select("#" + id).append("svg").attr("width", width).attr("height", height);
+
+        addHeader(svg, 
+            "The Inflation-Unemployment Loop", 
+            "Connected Scatterplot",
+            "Visualizing the economy's path from the 2022 shock back to the central bank target.", width
+        );
+
+        // Data: Q1 of each year marked
+        const data = [
+            {y:'21', q:1, u:6.0, i:1.4}, {y:'21', q:2, u:5.8, i:4.2}, {y:'21', q:3, u:5.2, i:5.4}, {y:'21', q:4, u:4.2, i:7.0},
+            {y:'22', q:1, u:3.8, i:8.5}, {y:'22', q:2, u:3.6, i:9.1}, {y:'22', q:3, u:3.5, i:8.2}, {y:'22', q:4, u:3.5, i:7.1},
+            {y:'23', q:1, u:3.4, i:6.0}, {y:'23', q:2, u:3.5, i:4.9}, {y:'23', q:3, u:3.8, i:3.7}, {y:'23', q:4, u:3.9, i:3.4},
+            {y:'24', q:1, u:4.0, i:3.2}, {y:'24', q:2, u:4.1, i:3.3}, {y:'24', q:3, u:4.2, i:3.1}, {y:'24', q:4, u:4.3, i:3.0},
+            {y:'25', q:1, u:4.4, i:2.8}, {y:'25', q:2, u:4.5, i:2.5}, {y:'25', q:3, u:4.5, i:2.2}, {y:'25', q:4, u:4.5, i:2.0}
+        ];
+
+        const x = d3.scaleLinear().domain([3, 7]).range([margin.left, width - margin.right]);
+        const y = d3.scaleLinear().domain([0, 10]).range([height - margin.bottom, margin.top]);
+
+        // Grid
+        svg.append("g").attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x).ticks(5).tickSize(-height + margin.top + margin.bottom))
+            .call(g => g.select(".domain").attr("stroke", "#334155"))
+            .call(g => g.selectAll("line").attr("stroke", "#334155").attr("stroke-dasharray", "2"))
+            .call(g => g.selectAll("text").attr("fill", "#94a3b8"));
+
+        svg.append("g").attr("transform", `translate(${margin.left},0)`)
+            .call(d3.axisLeft(y).ticks(5).tickSize(-width + margin.left + margin.right))
+            .call(g => g.select(".domain").attr("stroke", "#334155"))
+            .call(g => g.selectAll("line").attr("stroke", "#334155").attr("stroke-dasharray", "2"))
+            .call(g => g.selectAll("text").attr("fill", "#94a3b8"));
+
+        // Axis Titles
+        svg.append("text").attr("x", width/2).attr("y", height-15).attr("fill", "#94a3b8").attr("text-anchor", "middle").attr("font-size", "11px").text("Unemployment Rate (%)");
+        svg.append("text").attr("transform", "rotate(-90)").attr("x", -height/2).attr("y", 20).attr("fill", "#94a3b8").attr("text-anchor", "middle").attr("font-size", "11px").text("Inflation Rate (%)");
+
+        // The Path
+        const line = d3.line().curve(d3.curveCatmullRom).x(d => x(d.u)).y(d => y(d.i));
+        const defs = svg.append("defs");
+        const grad = defs.append("linearGradient").attr("id", "snailGrad").attr("x1","0%").attr("x2","100%");
+        grad.append("stop").attr("offset", "0%").attr("stop-color", "#f43f5e"); // Red (Past)
+        grad.append("stop").attr("offset", "100%").attr("stop-color", "#38bdf8"); // Blue (Future)
+
+        const path = svg.append("path").datum(data).attr("d", line)
+            .attr("fill", "none").attr("stroke", "url(#snailGrad)").attr("stroke-width", 3);
+
+        // Animation
+        const len = path.node().getTotalLength();
+        path.attr("stroke-dasharray", len).attr("stroke-dashoffset", len)
+            .transition().duration(2500).ease(d3.easeCubicOut).attr("stroke-dashoffset", 0);
+
+        // YEAR LABELS (The fix you requested)
+        // Filter only Q1 points for labelling
+        const yearPoints = data.filter(d => d.q === 1);
+
+        const dots = svg.selectAll(".year-group").data(yearPoints).enter().append("g");
+
+        dots.append("circle")
+            .attr("cx", d => x(d.u)).attr("cy", d => y(d.i)).attr("r", 4)
+            .attr("fill", "#0f172a").attr("stroke", "#fff").attr("stroke-width", 1.5)
+            .attr("opacity", 0)
+            .transition().delay((d,i) => i*600).duration(500).attr("opacity", 1);
+
+        dots.append("text")
+            .attr("x", d => x(d.u) + 8).attr("y", d => y(d.i) + 4)
+            .text(d => "'" + d.y)
+            .attr("fill", "#fff")
+            .attr("font-size", "11px")
+            .attr("font-weight", "bold")
+            .attr("opacity", 0)
+            .transition().delay((d,i) => i*600).duration(500).attr("opacity", 1);
+            
+        // Target Annotation
+        svg.append("text").attr("x", x(4.5)).attr("y", y(2.0)+25).text("TARGET").attr("fill","#38bdf8").attr("text-anchor","middle").attr("font-size","10px");
+        svg.append("circle").attr("cx",x(4.5)).attr("cy",y(2.0)).attr("r",15).attr("fill","rgba(56,189,248,0.1)").attr("stroke","#38bdf8").attr("stroke-dasharray","2 2");
+    }
+
+
+    // =========================================================
+    // CHART 2: THE DRIVERS
+    // =========================================================
+    function drawStream(id) {
+        const div = document.getElementById(id);
+        const width = div.clientWidth;
+        const height = div.clientHeight;
+        const margin = {top: 100, right: 20, bottom: 40, left: 20};
+
+        const svg = d3.select("#" + id).append("svg").attr("width", width).attr("height", height);
+
+        addHeader(svg, 
+            "The Composition of Inflation", 
+            "Streamgraph",
+            "The shift from 'Goods/Energy' shocks (2022) to 'Services/Housing' persistence (2025).", width
+        );
+
+        const N = 40;
+        const data = d3.range(N).map(i => {
+            const t = i / N; 
+            return {
+                date: new Date(2022, 0 + i, 1),
+                Energy: 5 * Math.exp(-15 * Math.pow(t - 0.1, 2)), 
+                Goods: 3 * Math.exp(-8 * Math.pow(t - 0.25, 2)),  
+                Services: 1 + 5 * t, 
+                Housing: 1.5 + 2 * Math.sin(t * 3)
+            };
+        });
+
+        const keys = ["Energy", "Goods", "Services", "Housing"];
+        const colors = ["#a78bfa", "#38bdf8", "#f43f5e", "#fbbf24"];
+        
+        const series = d3.stack().keys(keys).offset(d3.stackOffsetSilhouette)(data);
+        const x = d3.scaleTime().domain(d3.extent(data, d => d.date)).range([margin.left, width - margin.right]);
+        const y = d3.scaleLinear().domain([-8, 8]).range([height - margin.bottom, margin.top]);
+        const area = d3.area().curve(d3.curveBasis).x(d => x(d.data.date)).y0(d => y(d[0])).y1(d => y(d[1]));
+        const z = d3.scaleOrdinal().domain(keys).range(colors);
+
+        svg.selectAll("path").data(series).join("path")
+            .attr("d", area).attr("fill", d => z(d.key)).attr("opacity", 0.9).attr("stroke", "#1e293b")
+            .on("mouseover", function(e, d) {
+                d3.selectAll("path").attr("opacity", 0.3);
+                d3.select(this).attr("opacity", 1);
+                const tooltip = document.getElementById('tooltip');
+                tooltip.style.opacity = 1;
+                tooltip.innerHTML = `<strong>${d.key}</strong>`;
+                tooltip.style.left = e.pageX + 10 + "px";
+                tooltip.style.top = e.pageY + 10 + "px";
+            })
+            .on("mouseout", () => {
+                d3.selectAll("path").attr("opacity", 0.9);
+                document.getElementById('tooltip').style.opacity = 0;
+            });
+
+        svg.append("g").attr("transform", `translate(0,${height - margin.bottom})`)
+            .call(d3.axisBottom(x).ticks(5).tickSize(0).tickPadding(10))
+            .select(".domain").remove();
+        svg.selectAll(".tick text").attr("fill", "#94a3b8");
+    }
+
+
+    // =========================================================
+    // CHART 3: THE ANATOMY
+    // =========================================================
+    function drawPacking(id) {
+        const div = document.getElementById(id);
+        const width = div.clientWidth;
+        const height = div.clientHeight;
+        const svg = d3.select("#" + id).append("svg").attr("viewBox", `0 0 ${width} ${height}`);
+
+        addHeader(svg, 
+            "Circle Packing",
+            "Breakdown of the CPI Basket. Red bubbles are overheating (>4%). Blue bubbles are cooling."
+        );
+
+        const data = {
+            name: "CPI",
+            children: [
+                { name: "Rent", value: 30, rate: 5.8 }, { name: "OER", value: 25, rate: 5.4 },
+                { name: "Insurance", value: 6, rate: 14.5 }, { name: "Hospital", value: 5, rate: 6.1 },
+                { name: "Food", value: 15, rate: 1.2 }, { name: "Gas", value: 8, rate: -2.1 },
+                { name: "Used Cars", value: 6, rate: -4.5 }, { name: "Furniture", value: 5, rate: -1.2 },
+                { name: "Apparel", value: 4, rate: 0.5 }
+            ]
+        };
+
+        const root = d3.hierarchy(data).sum(d => d.value).sort((a, b) => b.value - a.value);
+        const pack = d3.pack().size([width, height - 100]).padding(5);
+        
+        const g = svg.append("g").attr("transform", `translate(0, 80)`);
+        const nodes = pack(root).descendants().slice(1);
+        const color = d3.scaleLinear().domain([-2, 2, 6]).range(["#38bdf8", "#f1f5f9", "#f43f5e"]);
+
+        g.selectAll("circle").data(nodes).join("circle")
+            .attr("cx", d => d.x).attr("cy", d => d.y).attr("r", d => d.r)
+            .attr("fill", d => color(d.data.rate)).attr("stroke", "#0f172a").attr("stroke-width", 2)
+            .on("mouseover", function(e, d) {
+                d3.select(this).attr("stroke", "#fff");
+                const tooltip = document.getElementById('tooltip');
+                tooltip.style.opacity = 1;
+                tooltip.innerHTML = `<strong>${d.data.name}</strong><br>Rate: ${d.data.rate}%`;
+                tooltip.style.left = e.pageX + 10 + "px";
+                tooltip.style.top = e.pageY + 10 + "px";
+            })
+            .on("mouseout", function() {
+                d3.select(this).attr("stroke", "#0f172a");
+                document.getElementById('tooltip').style.opacity = 0;
+            });
+
+        g.selectAll("text").data(nodes).join("text")
+            .attr("x", d => d.x).attr("y", d => d.y).attr("dy", "0.3em").attr("text-anchor", "middle")
+            .text(d => d.r > 25 ? d.data.name : "")
+            .attr("fill", "#0f172a").attr("font-size", "10px").attr("font-weight", "bold")
+            .style("pointer-events", "none");
+    }
+
+    window.addEventListener('resize', () => setMode(currentMode));
+
+</script>
+</body>
+</html>

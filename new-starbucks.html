@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Starbucks Index 2025 - Layout Adjusted</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;900&display=swap" rel="stylesheet">
+    <style>
+        /* 1. RESET & FULL SCREEN SETUP */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #1a1a1a;
+            overflow: hidden; 
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #viz-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: radial-gradient(circle at 50% 50%, #2b2b2b 0%, #1a1a1a 80%);
+        }
+
+        svg {
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-width: 100%; 
+            max-height: 100%;
+        }
+
+        /* --- UPDATED IMAGE POSITIONING --- */
+        #corner-image {
+            position: absolute;
+            /* Percentages match the SVG coordinates (x=50 is ~3.6% of 1400) */
+            top: 14%; 
+            left: 15%; 
+            width: 18vw; 
+            max-width: 200px;
+            min-width: 120px;
+            height: 200px;
+            z-index: 10;
+            opacity: 0.9;
+            /* Critical: Allows clicking the map THROUGH the image */
+            pointer-events: none; 
+            filter: drop-shadow(0 10px 10px rgba(0,0,0,0.5));
+        }
+
+        /* --- STYLING CLASSES --- */
+        .country { stroke: #333; stroke-width: 0.5px; }
+        .country-active { fill: #2a2a2a; }
+        .country-inactive { fill: #1e1e1e; }
+
+        .connector {
+            stroke: #666; stroke-width: 1px;
+            fill: none; opacity: 0.4; stroke-dasharray: 3 3; 
+        }
+
+        .cup-group { pointer-events: none; }
+        .cup-body { fill: #f2f2f2; } 
+        .cup-lid  { fill: #ffffff; } 
+        .cup-sleeve { stroke: rgba(0,0,0,0.1); stroke-width: 0.5px; }
+        
+        .price-badge-bg {
+            fill: #111; stroke: #ff9800; stroke-width: 1px;
+        }
+        
+        .label-price {
+            font-size: 9px; fill: #fff; font-weight: 900; text-anchor: middle;
+        }
+
+        .label-country {
+            font-family: 'Roboto', sans-serif; font-size: 11px; fill: #bbb;
+            font-weight: 500; text-anchor: middle; text-transform: uppercase;
+            letter-spacing: 0.5px; text-shadow: 0 2px 4px rgba(0,0,0,1);
+        }
+
+        /* SVG Text Styles */
+        .title-text { fill: #fff; font-weight: 900; font-size: 48px; font-family: 'Roboto', sans-serif; }
+        .subtitle-text { fill: #888; font-size: 14px; font-family: 'Roboto', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+        .insight-text { fill: #ccc; font-size: 14px; font-family: 'Roboto', sans-serif; }
+        .legend-text { fill: #888; font-size: 10px; font-family: 'Roboto', sans-serif; }
+    </style>
+</head>
+<body>
+
+<div id="viz-container">
+    <img id="corner-image" src="D:\aditya\NYU-London\Data-viz\journey\starbucks\assests\starbucks.png" alt="Starbucks Cup Splash">
+</div>
+
+<script>
+    const width = 1400;
+    const height = 900;
+    
+    const svg = d3.select("#viz-container")
+        .append("svg")
+        .attr("viewBox", `0 0 ${width} ${height}`)
+        .attr("preserveAspectRatio", "xMidYMid meet");
+
+    const data = [
+        { country: "Switzerland", price: 7.75, code: "CHE" },
+        { country: "Denmark", price: 6.90, code: "DNK" },
+        { country: "Luxembourg", price: 6.15, code: "LUX" },
+        { country: "France", price: 6.05, code: "FRA" },
+        { country: "USA", price: 5.95, code: "USA" },
+        { country: "Germany", price: 5.35, code: "DEU" },
+        { country: "UK", price: 5.30, code: "GBR" },
+        { country: "Saudi Arabia", price: 5.15, code: "SAU" },
+        { country: "China", price: 4.60, code: "CHN" },
+        { country: "Mexico", price: 4.50, code: "MEX" },
+        { country: "Australia", price: 4.30, code: "AUS" },
+        { country: "South Korea", price: 4.25, code: "KOR" },
+        { country: "India", price: 4.00, code: "IND" },
+        { country: "Canada", price: 3.95, code: "CAN" },
+        { country: "Brazil", price: 3.50, code: "BRA" },
+        { country: "Japan", price: 3.45, code: "JPN" },
+        { country: "Turkey", price: 2.50, code: "TUR" },
+        { country: "Egypt", price: 2.12, code: "EGY" },
+        { country: "Argentina", price: 4.10, code: "ARG" },
+        { country: "South Africa", price: 3.60, code: "ZAF" },
+        { country: "Italy", price: 3.80, code: "ITA" },
+        { country: "Spain", price: 4.20, code: "ESP" },
+        { country: "Russia", price: 3.10, code: "RUS" },
+        { country: "Indonesia", price: 3.65, code: "IDN" },
+        { country: "Vietnam", price: 2.88, code: "VNM" }
+    ];
+
+    const dataMap = new Map(data.map(d => [d.code, d]));
+
+    const colorScale = d3.scaleThreshold()
+        .domain([2.5, 3.5, 4.5, 5.5, 6.5])
+        .range(["#FFD54F", "#FFB74D", "#FF9800", "#F57C00", "#E65100", "#BF360C"]);
+
+    // --- UI LAYER ---
+    const uiLayer = svg.append("g");
+
+    // Title Text (Coordinates: x=50, y=80)
+    uiLayer.append("text")
+        .attr("class", "title-text")
+        .attr("x", 50).attr("y", 80)
+        .html("The Price of a <tspan fill='#ff9800'>Starbucks Latte</tspan>");
+
+    // Subtitle (Coordinates: x=50, y=110)
+    uiLayer.append("text")
+        .attr("class", "subtitle-text")
+        .attr("x", 50).attr("y", 110)
+        .text("Grande Latte Index • Capital Cities 2025");
+
+    // Footer
+    const footerGroup = uiLayer.append("g").attr("transform", "translate(50, 820)");
+    footerGroup.append("rect").attr("width", 4).attr("height", 50).attr("fill", "#ff9800");
+    footerGroup.append("text").attr("class", "insight-text").attr("x", 15).attr("y", 20)
+        .html("<tspan fill='#fff' font-weight='bold'>Switzerland ($7.75)</tspan> remains the most expensive,");
+    footerGroup.append("text").attr("class", "insight-text").attr("x", 15).attr("y", 42)
+        .html("while <tspan fill='#fff' font-weight='bold'>Egypt ($2.12)</tspan> offers the most affordable cup.");
+
+    // --- MAP LOGIC ---
+    d3.json("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson").then(function(topo) {
+
+        const projection = d3.geoMercator()
+            .scale(150)
+            .center([0, 40])
+            .translate([width / 2, height / 2]);
+
+        const path = d3.geoPath().projection(projection);
+
+        svg.append("g")
+            .selectAll("path")
+            .data(topo.features)
+            .join("path")
+            .attr("d", path)
+            .attr("class", d => dataMap.has(d.id) ? "country country-active" : "country country-inactive");
+
+        let featuresWithData = topo.features.filter(d => dataMap.has(d.id));
+        featuresWithData.forEach(d => {
+            const info = dataMap.get(d.id);
+            const centroid = path.centroid(d);
+            d.ox = isNaN(centroid[0]) ? width/2 : centroid[0]; 
+            d.oy = isNaN(centroid[1]) ? height/2 : centroid[1]; 
+            d.x = d.ox; d.y = d.oy; d.info = info; d.radius = 35; 
+        });
+
+        const simulation = d3.forceSimulation(featuresWithData)
+            .force("x", d3.forceX(d => d.ox).strength(0.1))
+            .force("y", d3.forceY(d => d.oy).strength(0.1))
+            .force("collide", d3.forceCollide(d => d.radius * 1.1).strength(1))
+            .stop();
+
+        for (let i = 0; i < 200; ++i) simulation.tick();
+
+        const labelsLayer = svg.append("g");
+        const labelGroups = labelsLayer.selectAll(".cup-group")
+            .data(featuresWithData).join("g").attr("class", "cup-group");
+
+        labelGroups.append("line").attr("class", "connector")
+            .attr("x1", d => d.ox).attr("y1", d => d.oy)
+            .attr("x2", d => d.x).attr("y2", d => d.y + 15); 
+
+        labelGroups.append("circle").attr("fill", "#666").attr("r", 2)
+            .attr("cx", d => d.ox).attr("cy", d => d.oy);
+
+        const cup = labelGroups.append("g").attr("transform", d => `translate(${d.x}, ${d.y})`);
+
+        cup.append("path").attr("class", "cup-body").attr("d", "M-8,-12 L8,-12 L6,10 C6,12 4,13 0,13 C-4,13 -6,12 -6,10 Z");
+        cup.append("path").attr("class", "cup-sleeve").attr("fill", d => colorScale(d.info.price)).attr("d", "M-7.5,-5 L7.5,-5 L6.8,4 L-6.8,4 Z");
+        cup.append("path").attr("class", "cup-lid").attr("d", "M-8.5,-12 L8.5,-12 L8.5,-14 C8.5,-15 5,-15 0,-15 C-5,-15 -8.5,-15 -8.5,-14 Z");
+
+        const badge = cup.append("g");
+        badge.append("rect").attr("class", "price-badge-bg").attr("x", -13).attr("y", -4).attr("width", 26).attr("height", 11).attr("rx", 5);
+        badge.append("text").attr("class", "label-price").attr("y", 4.5).text(d => "$" + d.info.price.toFixed(2));
+        
+        cup.append("text").attr("class", "label-country").attr("y", 25).text(d => d.info.country);
+
+        const legend = svg.append("g").attr("transform", `translate(${width - 300}, ${height - 50})`);
+        const defs = svg.append("defs");
+        const lg = defs.append("linearGradient").attr("id", "grad1");
+        const colors = colorScale.range();
+        
+        lg.selectAll("stop").data(colors).enter().append("stop")
+            .attr("offset", (d, i) => `${(i / (colors.length - 1)) * 100}%`)
+            .attr("stop-color", d => d);
+
+        legend.append("rect").attr("width", 250).attr("height", 4).attr("fill", "url(#grad1)").attr("rx", 2);
+        
+        const legScale = d3.scaleLinear().domain([2, 8]).range([0, 250]);
+        const legAxis = d3.axisBottom(legScale).ticks(5).tickFormat(d => "$" + d).tickSize(0).tickPadding(8);
+        
+        legend.append("g").attr("transform", "translate(0, 4)").call(legAxis).select(".domain").remove();
+        legend.append("text").attr("x", 250).attr("y", -8).attr("text-anchor", "end").attr("class", "legend-text").text("PRICE INTENSITY (USD)");
+        legend.selectAll(".tick text").attr("class", "legend-text");
+
+    }).catch(err => console.error(err));
+
+</script>
+</body>
+</html>

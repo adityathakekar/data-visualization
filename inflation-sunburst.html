@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deep Dive: Inflation Anatomy 2025</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap');
+
+        :root {
+            --bg-color: #F8F9FA;
+            --navy: #0F2540;
+            --blue: #005EB8;
+            --text-main: #333;
+            --border: #E1E4E8;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* HEADER */
+        header {
+            background: #fff;
+            padding: 15px 30px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--navy);
+            margin: 0;
+        }
+
+        .meta-tag {
+            font-size: 12px;
+            background: #eee;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #666;
+        }
+
+        /* MAIN DASHBOARD LAYOUT */
+        .dashboard {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* SIDEBAR (ANALYSIS TOOLS) */
+        .sidebar {
+            width: 320px;
+            background: white;
+            border-right: 1px solid var(--border);
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+            z-index: 10;
+        }
+
+        .panel-section h3 {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #888;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        /* LEGEND */
+        .legend-scale {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 11px;
+            color: #666;
+        }
+        .gradient-bar {
+            height: 10px;
+            background: linear-gradient(90deg, #2c7bb6, #f7f7f7, #d7191c);
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+
+        /* DYNAMIC DETAILS */
+        #detail-name {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--navy);
+            margin-bottom: 5px;
+        }
+        #detail-rate {
+            font-size: 32px;
+            font-weight: 300;
+        }
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .stat-label { color: #666; }
+        .stat-val { font-weight: 600; }
+
+        /* BREADCRUMB */
+        #breadcrumbs {
+            font-size: 13px;
+            color: var(--blue);
+            margin-bottom: 20px;
+            min-height: 20px;
+        }
+
+        /* CHART AREA */
+        .chart-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            background: radial-gradient(circle at center, #fff, #F8F9FA);
+        }
+
+        svg {
+            max-width: 100%;
+            max-height: 100%;
+            filter: drop-shadow(0 10px 20px rgba(0,0,0,0.1));
+        }
+
+        path {
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        path:hover { opacity: 0.85; }
+
+        /* CENTER OVERLAY */
+        .center-text {
+            pointer-events: none;
+            text-anchor: middle;
+        }
+        .center-label {
+            font-size: 12px;
+            fill: #666;
+            text-transform: uppercase;
+        }
+        .center-val {
+            font-size: 28px;
+            font-weight: bold;
+            fill: var(--navy);
+        }
+
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Inflation Heatmap: Sector Breakdown</h1>
+    <span class="meta-tag">Live Data Mode | Dec 2025 Est.</span>
+</header>
+
+<div class="dashboard">
+    
+    <div class="sidebar">
+        
+        <div class="panel-section">
+            <h3>Navigation Path</h3>
+            <div id="breadcrumbs">Total CPI</div>
+        </div>
+
+        <div class="panel-section">
+            <h3>Segment Analysis</h3>
+            <div id="detail-panel">
+                <div id="detail-name">Total CPI</div>
+                <div id="detail-rate" style="color:#d7191c;">+3.2%</div>
+                <div style="margin-top:20px;">
+                    <div class="stat-row">
+                        <span class="stat-label">Basket Weight:</span>
+                        <span class="stat-val" id="detail-weight">100%</span>
+                    </div>
+                    <div class="stat-row">
+                        <span class="stat-label">Trend Signal:</span>
+                        <span class="stat-val" id="detail-signal">STICKY</span>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size: 12px; color: #888; margin-top: 15px; line-height: 1.5;">
+                Hover over chart segments to inspect component details. Click any segment to zoom in.
+            </p>
+        </div>
+
+        <div class="panel-section" style="margin-top: auto;">
+            <h3>Inflation Intensity Scale</h3>
+            <div class="gradient-bar"></div>
+            <div class="legend-scale">
+                <span>Deflation (-2%)</span>
+                <span>Target (2%)</span>
+                <span>Hot (>6%)</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="chart-stage" id="chart-container"></div>
+
+</div>
+
+<script>
+    // --------------------------------------------------------
+    // 1. DATASET (Hierarchical)
+    // --------------------------------------------------------
+    const data = {
+        name: "Total CPI",
+        rate: 3.2,
+        children: [
+            {
+                name: "Goods",
+                rate: 0.8, // Cooling
+                children: [
+                    { name: "Energy", rate: -1.5, value: 7 },
+                    { name: "Vehicles", rate: -2.2, value: 6 },
+                    { name: "Apparel", rate: 0.5, value: 3 },
+                    { name: "Food", rate: 1.2, value: 8 },
+                    { name: "Alcohol", rate: 2.5, value: 2 }
+                ]
+            },
+            {
+                name: "Services",
+                rate: 5.4, // Hot
+                children: [
+                    { 
+                        name: "Housing", 
+                        rate: 5.8, 
+                        children: [
+                            { name: "Rent", rate: 6.1, value: 15 },
+                            { name: "Owners' Eq", rate: 5.9, value: 20 },
+                            { name: "Utilities", rate: 3.0, value: 5 }
+                        ]
+                    },
+                    { 
+                        name: "Transport", 
+                        rate: 9.0, 
+                        children: [
+                            { name: "Insurance", rate: 14.5, value: 3 },
+                            { name: "Repairs", rate: 7.2, value: 2 },
+                            { name: "Fares", rate: -1.0, value: 1 }
+                        ]
+                    },
+                    {
+                        name: "Medical",
+                        rate: 3.5,
+                        value: 6
+                    },
+                    {
+                        name: "Recreation",
+                        rate: 4.1,
+                        value: 4
+                    }
+                ]
+            }
+        ]
+    };
+
+    // --------------------------------------------------------
+    // 2. SETUP & DIMENSIONS
+    // --------------------------------------------------------
+    const container = document.getElementById("chart-container");
+    const width = 800;
+    const height = 800;
+    const radius = width / 6;
+
+    // Diverging Color Scale: Blue (-2) -> White (2) -> Red (6)
+    const color = d3.scaleLinear()
+        .domain([-2, 2, 6])
+        .range(["#2c7bb6", "#ffffff", "#d7191c"])
+        .interpolate(d3.interpolateRgb);
+
+    // Hierarchy Logic
+    const hierarchy = d3.hierarchy(data)
+        .sum(d => d.value)
+        .sort((a, b) => b.value - a.value);
+
+    const root = d3.partition()
+        .size([2 * Math.PI, hierarchy.height + 1])
+        (hierarchy);
+
+    root.each(d => d.current = d); // Store current state for zoom interp
+
+    // --------------------------------------------------------
+    // 3. DRAWING THE CHART
+    // --------------------------------------------------------
+    const svg = d3.select("#chart-container").append("svg")
+        .attr("viewBox", [-width / 2, -height / 2, width, height])
+        .style("font", "11px Inter");
+
+    const arc = d3.arc()
+        .startAngle(d => d.x0)
+        .endAngle(d => d.x1)
+        .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+        .padRadius(radius * 1.5)
+        .innerRadius(d => d.y0 * radius)
+        .outerRadius(d => Math.max(d.y0 * radius, d.y1 * radius - 1));
+
+    // Paths (Slices)
+    const path = svg.append("g")
+        .selectAll("path")
+        .data(root.descendants().slice(1))
+        .join("path")
+        .attr("fill", d => color(d.data.rate))
+        .attr("fill-opacity", d => arcVisible(d.current) ? (d.children ? 1 : 0.8) : 0)
+        .attr("pointer-events", d => arcVisible(d.current) ? "auto" : "none")
+        .attr("d", d => arc(d.current))
+        .attr("stroke", "white")
+        .attr("stroke-width", "1px");
+
+    // Labels
+    const label = svg.append("g")
+        .attr("pointer-events", "none")
+        .attr("text-anchor", "middle")
+        .selectAll("text")
+        .data(root.descendants().slice(1))
+        .join("text")
+        .attr("dy", "0.35em")
+        .attr("fill-opacity", d => +labelVisible(d.current))
+        .attr("transform", d => labelTransform(d.current))
+        .text(d => d.data.name)
+        .style("fill", "#0F2540")
+        .style("font-weight", "600");
+
+    // Center Circle (Back Button)
+    const parent = svg.append("circle")
+        .datum(root)
+        .attr("r", radius)
+        .attr("fill", "white")
+        .attr("pointer-events", "all")
+        .style("cursor", "pointer")
+        .on("click", clicked);
+
+    // Center Text Overlay (Static initial state)
+    const centerTextGroup = svg.append("g").attr("class", "center-text");
+    const centerLabel = centerTextGroup.append("text").attr("class", "center-label").attr("dy", "-0.5em").text("CURRENT INFLATION");
+    const centerVal = centerTextGroup.append("text").attr("class", "center-val").attr("dy", "0.8em").text(root.data.rate + "%");
+
+
+    // --------------------------------------------------------
+    // 4. INTERACTION & LOGIC
+    // --------------------------------------------------------
+
+    // Zoom Click
+    path.filter(d => d.children)
+        .style("cursor", "pointer")
+        .on("click", clicked);
+
+    // Hover Logic (Update Sidebar)
+    path.on("mouseenter", function(event, d) {
+        updateSidebar(d);
+        
+        // Highlight path
+        d3.select(this).style("opacity", 1).attr("stroke-width", "2px").attr("stroke", "#333");
+    }).on("mouseleave", function(event, d) {
+        d3.select(this).style("opacity", null).attr("stroke-width", "1px").attr("stroke", "white");
+    });
+
+    // Handle Zoom
+    function clicked(event, p) {
+        parent.datum(p.parent || root);
+        
+        root.each(d => d.target = {
+            x0: Math.max(0, Math.min(1, (d.x0 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+            x1: Math.max(0, Math.min(1, (d.x1 - p.x0) / (p.x1 - p.x0))) * 2 * Math.PI,
+            y0: Math.max(0, d.y0 - p.depth),
+            y1: Math.max(0, d.y1 - p.depth)
+        });
+
+        const t = svg.transition().duration(750);
+
+        path.transition(t)
+            .tween("data", d => {
+                const i = d3.interpolate(d.current, d.target);
+                return t => d.current = i(t);
+            })
+            .attr("fill-opacity", d => arcVisible(d.target) ? (d.children ? 1 : 0.8) : 0)
+            .attr("pointer-events", d => arcVisible(d.target) ? "auto" : "none")
+            .attrTween("d", d => () => arc(d.current));
+
+        label.transition(t)
+            .attr("fill-opacity", d => +labelVisible(d.target))
+            .attrTween("transform", d => () => labelTransform(d.current));
+            
+        // Reset sidebar to the new "center" node
+        updateSidebar(p);
+    }
+
+    // Sidebar Update Function
+    function updateSidebar(d) {
+        // Update Name
+        document.getElementById("detail-name").innerText = d.data.name;
+        
+        // Update Rate & Color
+        const rateEl = document.getElementById("detail-rate");
+        rateEl.innerText = (d.data.rate > 0 ? "+" : "") + d.data.rate + "%";
+        rateEl.style.color = color(d.data.rate);
+
+        // Update Breadcrumbs
+        const sequence = d.ancestors().reverse().map(node => node.data.name).join(" > ");
+        document.getElementById("breadcrumbs").innerText = sequence;
+
+        // Weight Calculation (Approx based on value sum)
+        const totalVal = root.value;
+        const currentVal = d.value;
+        const weight = ((currentVal / totalVal) * 100).toFixed(1);
+        document.getElementById("detail-weight").innerText = weight + "%";
+
+        // Simple Logic for Signal
+        let signal = "NEUTRAL";
+        if (d.data.rate > 4) signal = "OVERHEATING";
+        else if (d.data.rate > 2) signal = "STICKY";
+        else if (d.data.rate < 0) signal = "COOLING";
+        else signal = "STABLE";
+        
+        document.getElementById("detail-signal").innerText = signal;
+
+        // Update Center Circle Text
+        centerVal.text(d.data.rate + "%");
+        centerVal.style("fill", color(d.data.rate));
+    }
+
+
+    // Helper Functions
+    function arcVisible(d) {
+        return d.y1 <= 3 && d.y0 >= 1 && d.x1 > d.x0;
+    }
+
+    function labelVisible(d) {
+        return d.y1 <= 3 && d.y0 >= 1 && (d.y1 - d.y0) * (d.x1 - d.x0) > 0.03;
+    }
+
+    function labelTransform(d) {
+        const x = (d.x0 + d.x1) / 2 * 180 / Math.PI;
+        const y = (d.y0 + d.y1) / 2 * radius;
+        return `rotate(${x - 90}) translate(${y},0) rotate(${x < 180 ? 0 : 180})`;
+    }
+
+</script>
+
+</body>
+</html>
