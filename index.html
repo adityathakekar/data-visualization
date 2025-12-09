@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Starbucks Global Intelligence 2025</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-green: #00704A; /* Starbucks Green */
+            --accent-orange: #ff9800; /* Your Inflation Orange */
+            --text-color: #e0e0e0;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* HERO SECTION */
+        .hero {
+            text-align: center;
+            padding: 80px 20px 40px;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .logo {
+            width: 100px;
+            height: auto;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px rgba(0,112,74, 0.3));
+        }
+
+        h1 {
+            font-size: 56px;
+            font-weight: 900;
+            margin: 0;
+            letter-spacing: -1px;
+            background: linear-gradient(120deg, #fff, #888);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            font-size: 18px;
+            color: #888;
+            margin-top: 10px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* GRID CONTAINER */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            width: 90%;
+            padding: 40px 0 80px;
+        }
+
+        /* CARDS */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            text-decoration: none;
+            color: white;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            border: 1px solid rgba(255,255,255,0.05);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 220px;
+        }
+
+        .card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            border-color: var(--accent-green);
+        }
+
+        /* Card Variations */
+        .card.inflation:hover { border-color: var(--accent-orange); }
+        .card.executive:hover { border-color: #2196F3; }
+        .card.threejs:hover { border-color: #9C27B0; }
+
+        .card-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+        }
+
+        .card h2 {
+            font-size: 24px;
+            margin: 0 0 10px 0;
+            font-weight: 700;
+        }
+
+        .card p {
+            font-size: 14px;
+            color: #aaa;
+            line-height: 1.5;
+            margin: 0;
+        }
+
+        .arrow {
+            position: absolute;
+            bottom: 30px;
+            right: 30px;
+            font-size: 24px;
+            opacity: 0;
+            transform: translateX(-10px);
+            transition: all 0.3s;
+        }
+
+        .card:hover .arrow {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* ANIMATION */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            h1 { font-size: 36px; }
+            .dashboard-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="hero">
+        <img src="assets/starbucks.png" alt="Starbucks Logo" class="logo">
+        <h1>Global Intelligence</h1>
+        <p class="subtitle">Fiscal Year 2025 Data Visualizations</p>
+    </header>
+
+    <div class="dashboard-grid">
