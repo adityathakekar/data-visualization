@@ -45,7 +45,7 @@
 
 ## About The Project
 
-![Product Screenshot](https://giphy.com/gifs/wolfram-research-data-visualization-3o6Ygfw40tlnPhX87m)
+<a href= "Product Screenshot" >   <img src = "https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWU3MnJpODVtaDdzdG9idjN0N2kxZ28wZjhzZ3Jrbjg0dDY3YzBoNiZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/3o6Ygfw40tlnPhX87m/giphy.gif" width="300" height="300"> </a>
 
 This repository serves as a portfolio for advanced data visualization techniques. It moves beyond static charts to create interactive, story-driven experiences. The project is divided into three distinct phases:
 
