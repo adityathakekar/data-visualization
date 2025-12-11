@@ -4,16 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Global Inflation Heatmap 2000-2025</title>
-    
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
-    
-   
     <style>
-        /* Page Specific Layout overrides */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
         body {
-            /* Centering handled by flex in style.css, but we need block flow here for the long content */
-            display: block; 
-            padding: 40px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #ffffff;
+            padding: 20px;
+            min-height: 100vh;
         }
         
         .container {
@@ -25,35 +24,32 @@
             text-align: center;
             margin-bottom: 30px;
             padding: 20px;
-            /* No background here, clean look */
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
         }
         
         h1 {
-            font-size: 48px;
-            font-weight: 900;
+            font-size: 2.5em;
             margin-bottom: 10px;
-            /* Color inherited from style.css */
-        }
-
-        h1 span {
-            color: var(--accent-red); /* Using the global red accent */
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .subtitle {
-            font-size: 18px;
-            color: var(--text-muted);
+            font-size: 1.1em;
+            color: #a0a0a0;
             margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
         }
         
-        /* --- LEGEND --- */
         .legend {
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 15px;
-            margin: 30px 0;
+            gap: 5px;
+            margin: 20px 0;
             flex-wrap: wrap;
         }
         
@@ -62,27 +58,24 @@
             align-items: center;
             gap: 8px;
             padding: 8px 16px;
-            background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.05);
+            background: rgba(255,255,255,0.08);
             border-radius: 8px;
             font-size: 0.9em;
-            color: var(--text-muted);
         }
         
         .legend-color {
             width: 30px;
-            height: 15px;
+            height: 20px;
             border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.2);
         }
         
-        /* --- HEATMAP GRID --- */
         .heatmap-container {
-            background: var(--card-bg);
+            background: rgba(255,255,255,0.05);
             border-radius: 12px;
             padding: 30px;
             overflow-x: auto;
-            border: 1px solid rgba(255,255,255,0.05);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
         
         .heatmap {
@@ -91,77 +84,69 @@
             min-width: 1200px;
         }
         
-        /* Grid Columns: Country Name (150px) + 26 Years */
-        .heatmap-header, .heatmap-row {
+        .heatmap-header {
             display: grid;
-            grid-template-columns: 150px repeat(26, 1fr);
+            grid-template-columns: 150px repeat(26, 40px);
+            gap: 2px;
+            margin-bottom: 2px;
+        }
+        
+        .heatmap-row {
+            display: grid;
+            grid-template-columns: 150px repeat(26, 40px);
             gap: 2px;
         }
         
-        .heatmap-header { margin-bottom: 5px; }
-        
         .cell {
-            padding: 10px 2px;
+            padding: 10px;
             text-align: center;
-            border-radius: 2px;
-            font-size: 12px;
+            border-radius: 4px;
+            font-size: 0.85em;
             font-weight: 500;
-            transition: all 0.2s ease;
-            cursor: default;
+            transition: all 0.3s ease;
+            cursor: pointer;
             position: relative;
-            color: #121212; /* Default text dark for contrast on bright cells */
         }
-
-        /* Hover Effect */
-        .cell:not(.header-cell):not(.country-cell):hover {
-            transform: scale(1.3);
+        
+        .cell:hover {
+            transform: scale(1.15);
             z-index: 10;
-            border: 1px solid #fff;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
         }
         
         .header-cell {
-            background: transparent;
-            color: var(--text-muted);
-            font-weight: 700;
-            font-size: 10px;
+            background: rgba(255,255,255,0.1);
+            color: #ffffff;
+            font-weight: 600;
         }
         
         .country-cell {
-            background: transparent;
+            background: rgba(255,255,255,0.1);
             text-align: left;
-            padding-left: 10px;
-            font-weight: 700;
-            color: var(--text-main);
-            display: flex;
-            align-items: center;
-            font-size: 13px;
+            padding-left: 15px;
+            font-weight: 600;
         }
         
-        /* --- TOOLTIP --- */
         .tooltip {
             position: fixed;
-            background: rgba(20, 20, 20, 0.98);
+            background: rgba(0,0,0,0.95);
             color: white;
-            padding: 15px;
+            padding: 12px 16px;
             border-radius: 8px;
             font-size: 0.9em;
             pointer-events: none;
             z-index: 1000;
             display: none;
-            border: 1px solid var(--accent-orange);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
-            min-width: 150px;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
         }
         
         .tooltip strong {
             display: block;
             margin-bottom: 5px;
             font-size: 1.1em;
-            color: var(--accent-orange);
         }
         
-        /* --- STATS CARDS --- */
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -170,61 +155,71 @@
         }
         
         .stat-card {
-            background: var(--card-bg);
+            background: rgba(255,255,255,0.08);
             padding: 20px;
             border-radius: 12px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
         .stat-value {
             font-size: 2.5em;
-            font-weight: 900;
+            font-weight: 700;
             margin: 10px 0;
-            color: #fff;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .stat-label {
-            color: var(--text-muted);
-            font-size: 0.8em;
+            color: #a0a0a0;
+            font-size: 0.9em;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
         
-        /* Highlight 2022 Column header */
         .highlight-2022 {
-            color: var(--accent-red);
-            font-weight: 900;
+            animation: pulse 2s infinite;
         }
-
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1>Global Inflation <span>Surge</span></h1>
-            <p class="subtitle">CPI Data Visualization (2000-2025)</p>
+            <h1>🔥 The Global Inflation Surge: 2000-2025</h1>
+            <p class="subtitle">Watch the world turn darker red in 2022 - A data story of the greatest inflation spike in 40+ years</p>
             
             <div class="legend">
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #2c2c2c;"></div>
-                    <span>Low/Deflation</span>
+                    <div class="legend-color" style="background: #FFEBEE;"></div>
+                    <span>Deflation (&lt;0%)</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #fdd835;"></div>
-                    <span>Target (2%)</span>
+                    <div class="legend-color" style="background: #FFCDD2;"></div>
+                    <span>Below Target (0-1.5%)</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #fb8c00;"></div>
-                    <span>Moderate (3-5%)</span>
+                    <div class="legend-color" style="background: #EF9A9A;"></div>
+                    <span>At Target (1.5-2.5%)</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #e65100;"></div>
+                    <div class="legend-color" style="background: #EF5350;"></div>
+                    <span>Moderate (2.5-5%)</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background: #C62828;"></div>
                     <span>High (5-10%)</span>
                 </div>
                 <div class="legend-item">
-                    <div class="legend-color" style="background: #b71c1c;"></div>
-                    <span>Extreme (10%+)</span>
+                    <div class="legend-color" style="background: #640000;"></div>
+                    <span>Very High (10%+)</span>
                 </div>
             </div>
         </header>
@@ -235,16 +230,16 @@
         
         <div class="stats">
             <div class="stat-card">
-                <div class="stat-label">Global Avg (2025)</div>
-                <div class="stat-value" id="avg2025" style="color: var(--accent-green)">-</div>
+                <div class="stat-label">Global Average 2025</div>
+                <div class="stat-value" id="avg2025">-</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Peak Crisis (2022)</div>
-                <div class="stat-value" id="peak" style="color: var(--accent-red)">-</div>
+                <div class="stat-label">Peak Year Average</div>
+                <div class="stat-value" id="peak">-</div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Markets at Target</div>
-                <div class="stat-value" id="target" style="color: var(--accent-orange)">-</div>
+                <div class="stat-label">Countries at Target (2025)</div>
+                <div class="stat-value" id="target">-</div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Highest Rate (2022)</div>
@@ -263,22 +258,22 @@
         const countries = [...new Set(data.map(d => d.Country))];
         const years = [...new Set(data.map(d => d.Year))].sort();
         
-        // --- NEW COLOR SCALE (Matches the D3 Map) ---
         function getColor(rate) {
-            if (rate < 1.5) return '#2c2c2c';  // Dark Gray (Low/Deflation)
-            if (rate < 2.5) return '#fdd835';  // Yellow (Target)
-            if (rate < 5.0) return '#fb8c00';  // Orange (Moderate)
-            if (rate < 10.0) return '#e65100'; // Dark Orange (High)
-            return '#b71c1c';                  // Deep Red (Extreme)
+            if (rate < 0) return '#FFEBEE';    // Very pale pink
+            if (rate < 1.5) return '#FFCDD2';  // Light pink
+            if (rate < 2.5) return '#EF9A9A';  // Soft red
+            if (rate < 5) return '#EF5350';    // Medium red
+            if (rate < 10) return '#C62828';   // Deep red
+            return '#640000';                  // Darkest red
         }
         
         function getCategory(rate) {
             if (rate < 0) return 'Deflation';
-            if (rate < 1.5) return 'Low';
+            if (rate < 1.5) return 'Below Target';
             if (rate < 2.5) return 'At Target ⭐';
             if (rate < 5) return 'Moderate';
             if (rate < 10) return 'High';
-            return 'Extreme Crisis';
+            return 'Very High';
         }
         
         const heatmap = document.getElementById('heatmap');
@@ -307,12 +302,8 @@
                     const cell = document.createElement('div');
                     cell.className = `cell ${highlight}`;
                     cell.style.background = color;
-                    
-                    // Text contrast logic for new colors
-                    if(item.Rate < 1.5) cell.style.color = '#888'; // Gray on Dark Gray
-                    else if (item.Rate < 5) cell.style.color = '#000'; // Black on Yellow/Orange
-                    else cell.style.color = '#fff'; // White on Dark Red
-                    
+                    // Adjusted text color contrast for new red shades
+                    cell.style.color = item.Rate < 5 ? '#000' : '#fff';
                     cell.textContent = item.Rate.toFixed(1);
                     cell.dataset.country = country;
                     cell.dataset.year = year;
@@ -322,5 +313,54 @@
                 }
             });
             
-            heatmap
-
+            heatmap.appendChild(row);
+        });
+        
+        // Tooltip
+        const tooltip = document.getElementById('tooltip');
+        document.querySelectorAll('.heatmap-row .cell:not(.country-cell)').forEach(cell => {
+            cell.addEventListener('mouseenter', (e) => {
+                const country = e.target.dataset.country;
+                const year = e.target.dataset.year;
+                const rate = parseFloat(e.target.dataset.rate);
+                const region = e.target.dataset.region;
+                const category = getCategory(rate);
+                
+                tooltip.innerHTML = `
+                    <strong>${country} - ${year}</strong>
+                    <div>Inflation: <strong>${rate.toFixed(1)}%</strong></div>
+                    <div>Category: ${category}</div>
+                    <div>Region: ${region}</div>
+                    <div style="margin-top: 5px; color: #888;">Target: 2.0%</div>
+                `;
+                tooltip.style.display = 'block';
+            });
+            
+            cell.addEventListener('mousemove', (e) => {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
+            });
+            
+            cell.addEventListener('mouseleave', () => {
+                tooltip.style.display = 'none';
+            });
+        });
+        
+        // Calculate stats
+        const data2025 = data.filter(d => d.Year === 2025);
+        const avg2025 = (data2025.reduce((sum, d) => sum + d.Rate, 0) / data2025.length).toFixed(1);
+        
+        const data2022 = data.filter(d => d.Year === 2022);
+        const avg2022 = (data2022.reduce((sum, d) => sum + d.Rate, 0) / data2022.length).toFixed(1);
+        
+        const atTarget = data2025.filter(d => d.Rate >= 1.5 && d.Rate <= 2.5).length;
+        
+        const highest2022 = Math.max(...data2022.map(d => d.Rate)).toFixed(1);
+        
+        document.getElementById('avg2025').textContent = avg2025 + '%';
+        document.getElementById('peak').textContent = avg2022 + '% (2022)';
+        document.getElementById('target').textContent = atTarget + ' of 15';
+        document.getElementById('highest').textContent = highest2022 + '%';
+    </script>
+</body>
+</html>
